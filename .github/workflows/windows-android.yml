@@ -3,6 +3,8 @@ name: Build Qv2ray deps for Android / Windows
 on:
   push:
     branches: [master]
+  workflow_dispatch:
+    branches: [master]
       
 jobs:
   build:
