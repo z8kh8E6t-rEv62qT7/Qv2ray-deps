@@ -24,10 +24,10 @@ jobs:
           - os: windows
             osname: windows
             runon: windows-latest
-          - os: android
-            osname: linux
-            runon: ubuntu-latest
-      fail-fast: true
+          # - os: android
+          #   osname: linux
+          #   runon: ubuntu-latest
+      fail-fast: false
       
     runs-on: ${{ matrix.runon }}
     
@@ -91,17 +91,17 @@ jobs:
         asset_name: ${{ matrix.package }}-${{ matrix.arch }}-${{ matrix.os }}.7z
         tag: release
         overwrite: true
-  build-tools:
-    runs-on: ubuntu-latest
-    name: Build grpc tools for android
-    steps:
-    - uses: actions/checkout@v2    
-    - name: Install vcpkg
-      shell: bash
-      run: |
-        set +e
-        git clone https://github.com/microsoft/vcpkg
-        ./vcpkg/bootstrap-vcpkg.sh
+  # build-tools:
+  #   runs-on: ubuntu-latest
+  #   name: Build grpc tools for android
+  #   steps:
+  #   - uses: actions/checkout@v2    
+  #   - name: Install vcpkg
+  #     shell: bash
+  #     run: |
+  #       set +e
+  #       git clone https://github.com/microsoft/vcpkg
+  #       ./vcpkg/bootstrap-vcpkg.sh
 
     - name: Prepare gRPC
       shell: bash
