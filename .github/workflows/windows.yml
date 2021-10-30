@@ -10,7 +10,7 @@ jobs:
       matrix:
         package: [grpc, curl, openssl]
         os: [windows]
-        arch: [arm64, x64]
+        arch: [x64] # arm64
         include:
           - os: windows
             osname: windows
