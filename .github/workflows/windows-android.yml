@@ -1,32 +1,20 @@
 name: Build Qv2ray deps for Android / Windows
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
     branches: [master]
-      
+            
 jobs:
   build:
     strategy:
       matrix:
         package: [grpc, curl, openssl]
         os: [windows]
-        arch: [x64]
-        exclude:
-          - os: windows
-            arch: arm
-          - os: windows
-            arch: arm64
-          - os: windows
-            arch: x86
+        arch: [arm64, x64]
         include:
           - os: windows
             osname: windows
             runon: windows-latest
-          # - os: android
-          #   osname: linux
-          #   runon: ubuntu-latest
       fail-fast: false
       
     runs-on: ${{ matrix.runon }}
@@ -39,36 +27,10 @@ jobs:
         set +e
         git clone https://github.com/microsoft/vcpkg
         ./vcpkg/bootstrap-vcpkg.sh
-
-    - name: Prepare Android protoc and grpc_cpp_plugin
-      if: matrix.package == 'grpc' && matrix.os == 'android'
-      shell: bash
-      run: |
-        cd vcpkg
-        ./vcpkg install grpc
-        mkdir -p ./installed/${{ matrix.arch }}-android/bin
-        cp ./installed/x64-linux/tools/protobuf/protoc ./installed/${{ matrix.arch }}-android/bin
-        cp ./installed/x64-linux/tools/grpc/grpc_cpp_plugin ./installed/${{ matrix.arch }}-android/bin
-    
-    - name: Prepare Android Triplet
-      if: matrix.os == 'android'
-      shell: bash
-      run: |
-        cd vcpkg
-        git apply -v ../0001_vcpkg_fix_curl_android_build.patch
-        mkdir -p ./triplets/community
-        echo "
-        set(VCPKG_TARGET_ARCHITECTURE ${{ matrix.arch }})
-        set(VCPKG_CRT_LINKAGE dynamic)
-        set(VCPKG_LIBRARY_LINKAGE static)
-        set(VCPKG_CMAKE_SYSTEM_NAME Android)
-        " | tee ./triplets/community/${{ matrix.arch }}-android.cmake
-        ls -lah ./triplets/community
     
     - name: Install ${{ matrix.package }} on ${{ matrix.arch }}
       shell: bash
       run: |
-        export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk-bundle"
         ./vcpkg/vcpkg install ${{ matrix.package }}:${{ matrix.arch }}-${{ matrix.os }} --debug
       
     - name: Export Artifacts
@@ -91,43 +53,3 @@ jobs:
         asset_name: ${{ matrix.package }}-${{ matrix.arch }}-${{ matrix.os }}.7z
         tag: release
         overwrite: true
-  # build-tools:
-  #   runs-on: ubuntu-latest
-  #   name: Build grpc tools for android
-  #   steps:
-  #   - uses: actions/checkout@v2    
-  #   - name: Install vcpkg
-  #     shell: bash
-  #     run: |
-  #       set +e
-  #       git clone https://github.com/microsoft/vcpkg
-  #       ./vcpkg/bootstrap-vcpkg.sh
-
-    - name: Prepare gRPC
-      shell: bash
-      run: |
-        set +e
-        cd vcpkg
-        ./vcpkg install grpc
-
-    - name: Create Tools 7z
-      uses: DuckSoft/create-7z-action@v1.0
-      with:
-        pathSource: ./vcpkg/installed/x64-linux/tools
-        pathTarget: ./grpc-tools-linux.7z
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@master
-      with:
-        name: grpc-tools-linux.7z
-        path: grpc-tools-linux.7z
-        
-    - name: Upload To Release
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: grpc-tools-linux.7z
-        asset_name: grpc-tools-linux.7z
-        tag: release
-        overwrite: true
-    
